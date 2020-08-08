@@ -123,6 +123,8 @@ class Google003_Spider(scrapy.Spider):
         # The number of searches are executed one after the other
         # iterating over the list and yielding each request
         for z in self.ss:
+            # The site and counterparties parameters are passed through
+            # self.variables
             self.currentCp = self.currentCpLst[self.ss.index(z)]
             self.currentSite = self.currentSiteLst[self.ss.index(z)]
             yield scrapy.Request(url =self.start_urls[0]+z,
