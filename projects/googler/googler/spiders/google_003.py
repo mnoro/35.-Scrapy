@@ -90,9 +90,15 @@ class Google003_Spider(scrapy.Spider):
     #     for all the keywords
     ss = []
     pattern = 'search?q=%s+after:%s+inurl:%s+%s'
+    currentCpLst = []
+    currentSiteLst = []
     for c in counterparties:
         for s in site2search:
             ss.append(pattern %('"'+c+'"',dateSearch,s,neg))
+            currentCpLst.append(c)
+            currentSiteLst.append(s)
+    currentCp=''
+    currenSite=''
     # ss = random.sample(ss, 15)
     print("\n\nNumber of sites: %s"%(len(ss)))
     # ss = ['search?q=fiat+after:2020-05-01+inurl:finance.yahoo.com+fraud',
@@ -117,6 +123,8 @@ class Google003_Spider(scrapy.Spider):
         # The number of searches are executed one after the other
         # iterating over the list and yielding each request
         for z in self.ss:
+            self.currentCp = self.currentCpLst[self.ss.index(z)]
+            self.currentSite = self.currentSiteLst[self.ss.index(z)]
             yield scrapy.Request(url =self.start_urls[0]+z,
                 callback = self.parse, 
                 headers = {
@@ -140,6 +148,9 @@ class Google003_Spider(scrapy.Spider):
             data = requests.get(url)
             soup = BeautifulSoup(data.text,"lxml")
             yield{
+                'counterParty': self.currentCp,
+                'site': self.currentSite,
+                'dateSearch': 'after:'+self.dateSearch,
                 'searchText': response.url,
                 'pageCount': self.pageCounter,
                 'urlResult': entry.xpath(".//a/@href").get(),
