@@ -114,17 +114,8 @@ class Google003_Spider(scrapy.Spider):
         # this is executed at the start of the search
         # df = pd.read_csv(os.path.join(pathInput,'searches.csv'))
         print("\nSearch String: %s"%(self.search_string))
-        # for w in self.site2search:
-        #     print("\nNew Site: %s\n"%(w))
-        #     self.search_string = self.search_string1+"+inurl:"+w
-        # yield scrapy.Request(url =self.start_urls[0]+self.search_string,
-        # yield scrapy.Request(url =self.start_urls[0]+self.ss[0],
-
-        #     callback = self.parse, 
-        #     headers = {
-        #         'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
-        #         }
-        # )
+        # The number of searches are executed one after the other
+        # iterating over the list and yielding each request
         for z in self.ss:
             yield scrapy.Request(url =self.start_urls[0]+z,
                 callback = self.parse, 
