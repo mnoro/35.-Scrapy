@@ -69,13 +69,13 @@ class Google003_Spider(scrapy.Spider):
     negativeKeywords = [str('"'+x+'"') for x in negativeKeywords]
 
 # Reads in the Counterparties
-    df = pd.read_csv(os.path.join(pathInput, 'cp.csv'))
+    df = pd.read_csv(os.path.join(pathInput, 'cp_test.csv'))
     counterparties = list(df['Counterparty'])
     # counterparties = counterparties[1:2]
     dateSearch = '2020-01-01'
 
 # Reads in the trusted sites
-    df = pd.read_csv(os.path.join(pathInput, 'sites.csv'))
+    df = pd.read_csv(os.path.join(pathInput, 'sites_test.csv'))
     site2search = list(df['sitename'])
     site2search = [x for x in site2search]
     #site2search = site2search[0:1]
@@ -90,15 +90,12 @@ class Google003_Spider(scrapy.Spider):
     #     for all the keywords
     ss = []
     pattern = 'search?q=%s+after:%s+inurl:%s+%s'
-    currentCpLst = []
-    currentSiteLst = []
+    currentCpSiteLst = []
     for c in counterparties:
         for s in site2search:
             ss.append(pattern %('"'+c+'"',dateSearch,s,neg))
-            currentCpLst.append(c)
-            currentSiteLst.append(s)
-    currentCp=''
-    currenSite=''
+            currentCpSiteLst.append(c+"|"+s)
+    currentCpSite=''
     # ss = random.sample(ss, 15)
     print("\n\nNumber of sites: %s"%(len(ss)))
     # ss = ['search?q=fiat+after:2020-05-01+inurl:finance.yahoo.com+fraud',
@@ -109,7 +106,7 @@ class Google003_Spider(scrapy.Spider):
     tmpDf.loc[0,'SearchString']=search_string
     tmpDf.to_csv('./data/searchstring.csv')
     pageCounter=0
-    pageLimit=4
+    pageLimit=4  # Number of pages to retrieve 
     pageHtml = ''
 
     def start_requests(self):
@@ -125,10 +122,10 @@ class Google003_Spider(scrapy.Spider):
         for z in self.ss:
             # The site and counterparties parameters are passed through
             # self.variables
-            self.currentCp = self.currentCpLst[self.ss.index(z)]
-            self.currentSite = self.currentSiteLst[self.ss.index(z)]
+            currentCpSite = self.currentCpSiteLst[self.ss.index(z)]
             yield scrapy.Request(url =self.start_urls[0]+z,
                 callback = self.parse, 
+                meta={'cp':currentCpSite.split("|")[0], 'site':currentCpSite.split("|")[1]},
                 headers = {
                     'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
                     }
@@ -150,8 +147,8 @@ class Google003_Spider(scrapy.Spider):
             data = requests.get(url)
             soup = BeautifulSoup(data.text,"lxml")
             yield{
-                'counterParty': self.currentCp,
-                'site': self.currentSite,
+                'counterParty': response.meta['cp'],
+                'site': response.meta['site'],
                 'dateSearch': 'after:'+self.dateSearch,
                 'searchText': response.url,
                 'pageCount': self.pageCounter,
