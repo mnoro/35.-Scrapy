@@ -69,13 +69,13 @@ class Google003_Spider(scrapy.Spider):
     negativeKeywords = [str('"'+x+'"') for x in negativeKeywords]
 
 # Reads in the Counterparties
-    df = pd.read_csv(os.path.join(pathInput, 'cp_test.csv'))
+    df = pd.read_csv(os.path.join(pathInput, 'cp.csv'))
     counterparties = list(df['Counterparty'])
     # counterparties = counterparties[1:2]
     dateSearch = '2020-01-01'
 
 # Reads in the trusted sites
-    df = pd.read_csv(os.path.join(pathInput, 'sites_test.csv'))
+    df = pd.read_csv(os.path.join(pathInput, 'sites.csv'))
     site2search = list(df['sitename'])
     site2search = [x for x in site2search]
     #site2search = site2search[0:1]
