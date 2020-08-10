@@ -140,39 +140,61 @@ class Google003_Spider(scrapy.Spider):
 
     def parse(self, response):
         print('PAGE %s of Results' % (self.pageCounter+1))
+
+        '''
+            If no results this identifies the text box:
+                //div[@class='s card-section rQUFld']
+            Any great matches:
+                //div[@class='v3jTId']
+
+        '''
         print(">>>>",response.xpath("//*[@id='topstuff']/div/div/div[1]/text()[1]").get(), "<<<<")
-        for entry in response.xpath("//div[@class='r']"):
-            # Extracts data from the search results
-            url = entry.xpath(".//a/@href").get()
-            data = requests.get(url)
-            soup = BeautifulSoup(data.text,"lxml")
+        if (response.xpath("//div[@class='s card-section rQUFld']").get() is None) & (response.xpath("//div[@class='v3jTId']").get() is None):
+            for entry in response.xpath("//div[@class='r']"):
+                # Extracts data from the search results
+                url = entry.xpath(".//a/@href").get()
+                data = requests.get(url)
+                soup = BeautifulSoup(data.text,"lxml")
+                yield{
+                    'counterParty': response.meta['cp'],
+                    'site': response.meta['site'],
+                    'dateSearch': 'after:'+self.dateSearch,
+                    'searchText': response.url,
+                    'pageCount': self.pageCounter,
+                    'urlResult': entry.xpath(".//a/@href").get(),
+                    'titleResult':entry.xpath(".//h3/text()").get(),
+                    'bodyResult':entry.xpath(".//span[@class='st']/text()").get(),
+                    # 'pageResultHtml':self.pageHtml,
+                    'pageResultHtml': soup.get_text(' ',strip=True)
+                }
+            self.pageCounter += 1
+            if self.pageCounter < self.pageLimit:
+                next_page = response.xpath("//a[@id='pnnext']/@href").get()
+                if next_page is None:
+                    # Search for omitted results
+                    next_page = response.xpath("//a[text()='repeat the search with the omitted results included']/@href").get()
+                # print(">>>!!%s"%(next_page))
+                if next_page is not None:
+                    next_page = response.urljoin(next_page)
+                    # print(">>|||||>%s"%(next_page))
+                    yield scrapy.Request(url = next_page, # Specify URL= ortherwise doesn't worlk
+                        callback = self.parse,
+                        headers = {
+                        'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
+                    })
+        else:
             yield{
-                'counterParty': response.meta['cp'],
-                'site': response.meta['site'],
-                'dateSearch': 'after:'+self.dateSearch,
-                'searchText': response.url,
-                'pageCount': self.pageCounter,
-                'urlResult': entry.xpath(".//a/@href").get(),
-                'titleResult':entry.xpath(".//h3/text()").get(),
-                'bodyResult':entry.xpath(".//span[@class='st']/text()").get(),
-                # 'pageResultHtml':self.pageHtml,
-                'pageResultHtml': soup.get_text(' ',strip=True)
-            }
-        self.pageCounter += 1
-        if self.pageCounter < self.pageLimit:
-            next_page = response.xpath("//a[@id='pnnext']/@href").get()
-            if next_page is None:
-                # Search for omitted results
-                next_page = response.xpath("//a[text()='repeat the search with the omitted results included']/@href").get()
-            # print(">>>!!%s"%(next_page))
-            if next_page is not None:
-                next_page = response.urljoin(next_page)
-                # print(">>|||||>%s"%(next_page))
-                yield scrapy.Request(url = next_page, # Specify URL= ortherwise doesn't worlk
-                    callback = self.parse,
-                    headers = {
-                    'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
-                })
+                    'counterParty': response.meta['cp'],
+                    'site': response.meta['site'],
+                    'dateSearch': 'after:'+self.dateSearch,
+                    'searchText': response.url,
+                    'pageCount': self.pageCounter,
+                    'urlResult': "N/A",
+                    'titleResult':"N/A",
+                    'bodyResult':"No Results",
+                    # 'pageResultHtml':self.pageHtml,
+                    'pageResultHtml': "No Results"
+                }
 # To parse the page containing the 
     def parse_result(self, response):
         print('Scraping Content')
