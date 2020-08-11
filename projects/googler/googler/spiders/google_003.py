@@ -91,8 +91,10 @@ class Google003_Spider(scrapy.Spider):
     ss = []
     pattern = 'search?q=%s+after:%s+inurl:%s+%s'
     currentCpSiteLst = []
-    for c in counterparties:
-        for s in site2search:
+    #S witching the loop between cp and sites
+    # to lower the number of requests against sites
+    for s in site2search:
+        for c in counterparties:
             ss.append(pattern %('"'+c+'"',dateSearch,s,neg))
             currentCpSiteLst.append(c+"|"+s)
     currentCpSite=''
